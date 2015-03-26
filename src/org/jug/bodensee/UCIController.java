@@ -52,7 +52,11 @@ public class UCIController {
         process = processBuilder.start();
         inputReader = new InputStreamReader(process.getInputStream());
 
-        Executors.newCachedThreadPool().submit(() -> {
+        Executors.newSingleThreadExecutor((r) -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    }).submit(() -> {
             Scanner scan = new Scanner(inputReader);
             while (scan.hasNextLine()) {
                 String newLine = scan.nextLine();
@@ -81,7 +85,7 @@ public class UCIController {
         send("go inifinite");
     }
     
-    private void send(String s) {
+    public void send(String s) {
         try {
             System.out.println("SENDING TO ENGINE: " + s);
             outputStream.write(s + "\n");

@@ -34,10 +34,12 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -93,7 +95,7 @@ public class ChessUIFX extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         
-        final UCIController uciController = new UCIController("/Users/sven/Downloads/stockfish-6-mac/Mac/stockfish-6-64");        
+        final UCIController uciController = new UCIController("stockfish");        
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -119,7 +121,12 @@ public class ChessUIFX extends Application {
         uciController.lastLineFromEngineProperty().addListener((ov, old, newValue) -> {
             Platform.runLater(() -> textArea.appendText(newValue + "\n"));
         });
-        HBox box = new HBox(textArea, b);
+        TextField tf = new TextField();
+        VBox vox = new VBox(b, tf);
+        tf.setOnAction(a -> {
+            uciController.send(tf.getText());
+        });
+        HBox box = new HBox(textArea, vox);
         root.setBottom(box);
         Scene scene = new Scene(root, width * 8, heigth * 8);
         chessboardContainer.getStylesheets().add(this.getClass().getResource("chess.css").toExternalForm());
