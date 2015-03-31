@@ -41,10 +41,16 @@ public class UCIController {
     private OutputStreamWriter outputStream;
     
     private final ReadOnlyStringWrapper lastLineFromEngine = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper bestMove = new ReadOnlyStringWrapper();
     
     
     public UCIController(String path) {
         this.path = path;
+        lastLineFromEngine.addListener((ov, old, newValue) -> {
+            if(newValue.contains("bestmove")){
+                bestMove.setValue(newValue);
+            }
+        });
     }
 
     public void init() throws IOException {
@@ -76,16 +82,32 @@ public class UCIController {
     public ReadOnlyStringProperty lastLineFromEngineProperty() {
         return lastLineFromEngine.getReadOnlyProperty();
     }
+
+    public String getBestMove() {
+        return bestMove.get();
+    }
+
+    public ReadOnlyStringWrapper bestMoveProperty() {
+        return bestMove;
+    }
     
     public void startNewGame() {
         send("ucinewgame");
+    }
+
+    public void setSkillLevel(int skillLevel) {
+        if(skillLevel >= 0 && skillLevel <=20){
+        send("setoption name Skill Level value " + skillLevel);
+        }else{
+            Logger.getLogger(UCIController.class.getName()).log(Level.SEVERE, "Skill Level value " + skillLevel + " not between 0 and 20!");
+        }
     }
 
     public void go() {
         send("go inifinite");
     }
     
-    public void send(String s) {
+    private void send(String s) {
         try {
             System.out.println("SENDING TO ENGINE: " + s);
             outputStream.write(s + "\n");
