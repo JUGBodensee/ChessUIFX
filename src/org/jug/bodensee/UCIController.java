@@ -41,10 +41,16 @@ public class UCIController {
     private OutputStreamWriter outputStream;
     
     private final ReadOnlyStringWrapper lastLineFromEngine = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper bestMove = new ReadOnlyStringWrapper();
     
     
     public UCIController(String path) {
         this.path = path;
+        lastLineFromEngine.addListener((ov, old, newValue) -> {
+            if(newValue.contains("bestmove")){
+                bestMove.setValue(newValue);
+            }
+        });
     }
 
     public void init() throws IOException {
@@ -52,7 +58,11 @@ public class UCIController {
         process = processBuilder.start();
         inputReader = new InputStreamReader(process.getInputStream());
 
-        Executors.newCachedThreadPool().submit(() -> {
+        Executors.newSingleThreadExecutor((r) -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    }).submit(() -> {
             Scanner scan = new Scanner(inputReader);
             while (scan.hasNextLine()) {
                 String newLine = scan.nextLine();
@@ -72,9 +82,25 @@ public class UCIController {
     public ReadOnlyStringProperty lastLineFromEngineProperty() {
         return lastLineFromEngine.getReadOnlyProperty();
     }
+
+    public String getBestMove() {
+        return bestMove.get();
+    }
+
+    public ReadOnlyStringWrapper bestMoveProperty() {
+        return bestMove;
+    }
     
     public void startNewGame() {
         send("ucinewgame");
+    }
+
+    public void setSkillLevel(int skillLevel) {
+        if(skillLevel >= 0 && skillLevel <=20){
+        send("setoption name Skill Level value " + skillLevel);
+        }else{
+            Logger.getLogger(UCIController.class.getName()).log(Level.SEVERE, "Skill Level value " + skillLevel + " not between 0 and 20!");
+        }
     }
 
     public void go() {
